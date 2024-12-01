@@ -2,6 +2,25 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
+# Базовая схема для сотрудников
+class EmployeeBase(BaseModel):
+    name: str
+    position: str
+
+
+# Схема для создания сотрудника
+class EmployeeCreate(EmployeeBase):
+    pass
+
+
+# Схема для вывода данных сотрудника
+class Employee(EmployeeBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
 # Клиенты
 class ClientBase(BaseModel):
     name: str
