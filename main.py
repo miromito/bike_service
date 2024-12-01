@@ -3,14 +3,24 @@ from sqlalchemy.orm import Session
 from database import Base, engine, get_db
 import crud, models, schemas
 from dotenv import load_dotenv
+from fastapi.middleware.cors import CORSMiddleware
 
-dotenv_path = join(dirname(__file__), '.env')
-load_dotenv(dotenv_path)
+load_dotenv()
+
 # Создание таблиц
 Base.metadata.create_all(bind=engine)
 
+
 app = FastAPI()
 
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins (change "*" to a list of allowed origins if needed)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
 # Маршруты для клиентов
 @app.get("/clients/", response_model=list[schemas.Client])

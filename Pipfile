@@ -4,11 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = "*"
 uvicorn = "*"
 sqlalchemy = "*"
 psycopg2-binary = "*"
 python-dotenv = "*"
+fastapi = { extras = ["all"], version = "*" }
 
 [dev-packages]
 black = "*"
