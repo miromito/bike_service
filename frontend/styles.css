@@ -1,24 +1,20 @@
 body {
-    background-color: #f8f9fa; /* Light gray */
+    background-color: #f8f9fa;
     font-family: Arial, sans-serif;
 }
 
 h2 {
-    color: #343a40; /* Dark gray */
+    color: #343a40;
 }
 
-nav {
-    background-color: #007bff; /* Bootstrap primary color */
-    padding: 1rem;
+.navbar {
     margin-bottom: 1rem;
 }
 
-nav a {
-    color: white;
-    text-decoration: none;
-    margin-right: 1rem;
+.table {
+    margin-top: 1rem;
 }
 
-nav a:hover {
-    text-decoration: underline;
+form {
+    margin-top: 2rem;
 }

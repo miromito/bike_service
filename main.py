@@ -2,12 +2,10 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import Base, engine, get_db
 import crud, models, schemas
-from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 
-load_dotenv()
-
-# Создание таблиц
+# Вместо миграций, временно - для разработки
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 
 
@@ -22,34 +20,33 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Маршруты для клиентов
+
+# Клиенты
 @app.get("/clients/", response_model=list[schemas.Client])
 def read_clients(db: Session = Depends(get_db)):
     return crud.get_clients(db)
-
 
 @app.post("/clients/", response_model=schemas.Client)
 def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
     return crud.create_client(db, client)
 
 
-# Маршруты для сотрудников
-@app.get("/employees/", response_model=list[schemas.Employee])
-def read_employees(db: Session = Depends(get_db)):
-    return crud.get_employees(db)
-
-
-@app.post("/employees/", response_model=schemas.Employee)
-def create_employee(employee: schemas.EmployeeCreate, db: Session = Depends(get_db)):
-    return crud.create_employee(db, employee)
-
-
-# Маршруты для услуг
+# Услуги
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):
     return crud.get_services(db)
 
-
 @app.post("/services/", response_model=schemas.Service)
 def create_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)):
     return crud.create_service(db, service)
+
+
+# Заказы
+@app.get("/orders/", response_model=list[schemas.Order])
+def read_orders(db: Session = Depends(get_db)):
+    return crud.get_orders(db)
+
+
+@app.post("/orders/", response_model=schemas.Order)
+def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
+    return crud.create_order(db, order)
