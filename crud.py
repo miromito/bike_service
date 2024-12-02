@@ -1,5 +1,6 @@
 import time
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 import schemas
 
@@ -27,6 +28,15 @@ def delete_client(db: Session, client_id: int):
     return result.mappings().first()
 
 
+def update_client(db: Session, client_id: int, client: schemas.ClientCreate):
+    query = text(
+        "UPDATE clients SET name = :name, phone_number = :phone_number WHERE id = :id RETURNING *"
+    )
+    result = db.execute(query, {"id": client_id, "name": client.name, "phone_number": client.phone_number})
+    db.commit()
+    return result.mappings().first()
+
+
 # Сотрудники
 def get_employees(db: Session):
     query = text("SELECT * FROM employees")
@@ -50,6 +60,15 @@ def delete_employee(db: Session, employee_id: int):
     return result.mappings().first()
 
 
+def update_employee(db: Session, employee_id: int, employee: schemas.EmployeeCreate):
+    query = text(
+        "UPDATE employees SET name = :name, position = :position WHERE id = :id RETURNING *"
+    )
+    result = db.execute(query, {"id": employee_id, "name": employee.name, "position": employee.position})
+    db.commit()
+    return result.mappings().first()
+
+
 # Услуги
 def get_services(db: Session):
     query = text("SELECT * FROM services")
@@ -69,6 +88,15 @@ def create_service(db: Session, service: schemas.ServiceCreate):
 def delete_service(db: Session, service_id: int):
     query = text("DELETE FROM services WHERE id = :id RETURNING *")
     result = db.execute(query, {"id": service_id})
+    db.commit()
+    return result.mappings().first()
+
+
+def update_service(db: Session, service_id: int, service: schemas.ServiceCreate):
+    query = text(
+        "UPDATE services SET name = :name WHERE id = :id RETURNING *"
+    )
+    result = db.execute(query, {"id": service_id, "name": service.name})
     db.commit()
     return result.mappings().first()
 
@@ -110,3 +138,33 @@ def delete_order(db: Session, order_id: str):
     result = db.execute(query, {"id": order_id})
     db.commit()
     return result.mappings().first()
+
+
+def update_order(db: Session, order_id: str, order: schemas.OrderCreate):
+    try:
+        query = text(
+            """
+            UPDATE orders
+            SET client_id = :client_id,
+                service_id = :service_id,
+                employee_id = :employee_id,
+                date = :date
+            WHERE id = :id
+            RETURNING *
+            """
+        )
+        result = db.execute(
+            query,
+            {
+                "id": order_id,
+                "client_id": order.client_id,
+                "service_id": order.service_id,
+                "employee_id": order.employee_id,
+                "date": order.date,
+            },
+        )
+        db.commit()
+        return result.mappings().first()
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise e

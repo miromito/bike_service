@@ -14,9 +14,17 @@ const Clients = {
                 <tbody>
                     <tr v-for="(client, index) in clients" :key="client.id">
                         <td>{{ index + 1 }}</td>
-                        <td>{{ client.name }}</td>
-                        <td>{{ client.phone_number }}</td>
                         <td>
+                            <span v-if="!isEditing(client.id)">{{ client.name }}</span>
+                            <input v-if="isEditing(client.id)" v-model="editingClient.name" type="text" class="form-control">
+                        </td>
+                        <td>
+                            <span v-if="!isEditing(client.id)">{{ client.phone_number }}</span>
+                            <input v-if="isEditing(client.id)" v-model="editingClient.phone_number" type="text" class="form-control">
+                        </td>
+                        <td>
+                            <button v-if="!isEditing(client.id)" @click="startEditing(client)" class="btn btn-warning btn-sm">Edit</button>
+                            <button v-if="isEditing(client.id)" @click="saveEdit(client.id)" class="btn btn-success btn-sm">Save</button>
                             <button @click="deleteClient(client.id)" class="btn btn-danger btn-sm">Delete</button>
                         </td>
                     </tr>
@@ -44,7 +52,8 @@ const Clients = {
         return {
             clients: [],
             newClient: {name: "", phone_number: ""},
-            errorMessage: ""
+            errorMessage: "",
+            editingClient: null, // Stores the client being edited
         };
     },
     methods: {
@@ -79,9 +88,24 @@ const Clients = {
                 console.error("Error deleting client:", error);
                 this.errorMessage = "An unexpected error occurred while deleting the client.";
             }
-        }
-
-
+        },
+        startEditing(client) {
+            this.editingClient = {...client}; // Clone the client object for editing
+        },
+        isEditing(clientId) {
+            return this.editingClient && this.editingClient.id === clientId;
+        },
+        async saveEdit(clientId) {
+            const response = await fetch(`http://127.0.0.1:8000/clients/${clientId}`, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(this.editingClient),
+            });
+            if (response.ok) {
+                this.editingClient = null; // Clear the editing client
+                this.fetchClients();
+            }
+        },
     },
     mounted() {
         this.fetchClients();
@@ -104,9 +128,17 @@ const Employees = {
                 <tbody>
                     <tr v-for="(employee, index) in employees" :key="employee.id">
                         <td>{{ index + 1 }}</td>
-                        <td>{{ employee.name }}</td>
-                        <td>{{ employee.position }}</td>
                         <td>
+                            <span v-if="!isEditing(employee.id)">{{ employee.name }}</span>
+                            <input v-if="isEditing(employee.id)" v-model="editingEmployee.name" type="text" class="form-control">
+                        </td>
+                        <td>
+                            <span v-if="!isEditing(employee.id)">{{ employee.position }}</span>
+                            <input v-if="isEditing(employee.id)" v-model="editingEmployee.position" type="text" class="form-control">
+                        </td>
+                        <td>
+                            <button v-if="!isEditing(employee.id)" @click="startEditing(employee)" class="btn btn-warning btn-sm">Edit</button>
+                            <button v-if="isEditing(employee.id)" @click="saveEdit(employee.id)" class="btn btn-success btn-sm">Save</button>
                             <button @click="deleteEmployee(employee.id)" class="btn btn-danger btn-sm">Delete</button>
                         </td>
                     </tr>
@@ -135,6 +167,7 @@ const Employees = {
         return {
             employees: [],
             newEmployee: {name: "", position: ""},
+            editingEmployee: null, // Track the employee being edited
             errorMessage: ""
         };
     },
@@ -161,13 +194,30 @@ const Employees = {
                 });
                 if (!response.ok) {
                     const error = await response.json();
-                    this.errorMessage = error.detail; // Set the error message
+                    this.errorMessage = error.detail;
                 } else {
                     this.fetchEmployees();
                 }
             } catch (error) {
                 console.error("Error deleting employee:", error);
                 alert("An unexpected error occurred while deleting the employee.");
+            }
+        },
+        startEditing(employee) {
+            this.editingEmployee = {...employee};
+        },
+        isEditing(employeeId) {
+            return this.editingEmployee && this.editingEmployee.id === employeeId;
+        },
+        async saveEdit(employeeId) {
+            const response = await fetch(`http://127.0.0.1:8000/employees/${employeeId}`, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(this.editingEmployee)
+            });
+            if (response.ok) {
+                this.editingEmployee = null;
+                this.fetchEmployees();
             }
         }
     },
@@ -191,8 +241,13 @@ const Services = {
                 <tbody>
                     <tr v-for="(service, index) in services" :key="service.id">
                         <td>{{ index + 1 }}</td>
-                        <td>{{ service.name }}</td>
                         <td>
+                            <span v-if="!isEditing(service.id)">{{ service.name }}</span>
+                            <input v-if="isEditing(service.id)" v-model="editingService.name" type="text" class="form-control">
+                        </td>
+                        <td>
+                            <button v-if="!isEditing(service.id)" @click="startEditing(service)" class="btn btn-warning btn-sm">Edit</button>
+                            <button v-if="isEditing(service.id)" @click="saveEdit(service.id)" class="btn btn-success btn-sm">Save</button>
                             <button @click="deleteService(service.id)" class="btn btn-danger btn-sm">Delete</button>
                         </td>
                     </tr>
@@ -217,6 +272,7 @@ const Services = {
         return {
             services: [],
             newService: {name: ""},
+            editingService: null, // Track the service being edited
             errorMessage: ""
         };
     },
@@ -243,13 +299,30 @@ const Services = {
                 });
                 if (!response.ok) {
                     const error = await response.json();
-                    this.errorMessage = error.detail; // Set the error message
+                    this.errorMessage = error.detail;
                 } else {
                     this.fetchServices();
                 }
             } catch (error) {
                 console.error("Error deleting service:", error);
                 alert("An unexpected error occurred while deleting the service.");
+            }
+        },
+        startEditing(service) {
+            this.editingService = {...service};
+        },
+        isEditing(serviceId) {
+            return this.editingService && this.editingService.id === serviceId;
+        },
+        async saveEdit(serviceId) {
+            const response = await fetch(`http://127.0.0.1:8000/services/${serviceId}`, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(this.editingService)
+            });
+            if (response.ok) {
+                this.editingService = null;
+                this.fetchServices();
             }
         }
     },
@@ -276,16 +349,40 @@ const Orders = {
                 <tbody>
                     <tr v-for="order in orders" :key="order.id">
                         <td>{{ order.id }}</td>
-                        <td>{{ getClientName(order.client_id) }}</td>
-                        <td>{{ getServiceName(order.service_id) }}</td>
-                        <td>{{ getEmployeeName(order.employee_id) }}</td>
-                        <td>{{ order.date }}</td>
                         <td>
+                            <span v-if="!isEditing(order.id)">{{ getClientName(order.client_id) }}</span>
+                            <select v-if="isEditing(order.id)" v-model="editingOrder.client_id" class="form-select">
+                                <option v-for="client in clients" :value="client.id">{{ client.name }}</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span v-if="!isEditing(order.id)">{{ getServiceName(order.service_id) }}</span>
+                            <select v-if="isEditing(order.id)" v-model="editingOrder.service_id" class="form-select">
+                                <option v-for="service in services" :value="service.id">{{ service.name }}</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span v-if="!isEditing(order.id)">{{ getEmployeeName(order.employee_id) }}</span>
+                            <select v-if="isEditing(order.id)" v-model="editingOrder.employee_id" class="form-select">
+                                <option v-for="employee in employees" :value="employee.id">{{ employee.name }}</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span v-if="!isEditing(order.id)">{{ order.date }}</span>
+                            <input v-if="isEditing(order.id)" v-model="editingOrder.date" type="date" class="form-control">
+                        </td>
+                        <td>
+                            <button v-if="!isEditing(order.id)" @click="startEditing(order)" class="btn btn-warning btn-sm">Edit</button>
+                            <button v-if="isEditing(order.id)" @click="saveEdit(order.id)" class="btn btn-success btn-sm">Save</button>
                             <button @click="deleteOrder(order.id)" class="btn btn-danger btn-sm">Delete</button>
                         </td>
                     </tr>
                 </tbody>
             </table>
+            
+            <div v-if="errorMessage" class="alert alert-danger">
+                {{ errorMessage }}
+            </div>
 
             <h3>Add Order</h3>
             <form @submit.prevent="addOrder">
@@ -321,7 +418,9 @@ const Orders = {
             clients: [],
             services: [],
             employees: [],
-            newOrder: {client_id: "", service_id: "", employee_id: "", date: ""}
+            newOrder: {client_id: "", service_id: "", employee_id: "", date: ""},
+            editingOrder: null, // Track the order being edited
+            errorMessage: ""
         };
     },
     methods: {
@@ -353,10 +452,35 @@ const Orders = {
             }
         },
         async deleteOrder(orderId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
+                    method: "DELETE",
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    this.errorMessage = error.detail;
+                } else {
+                    this.fetchOrders();
+                }
+            } catch (error) {
+                console.error("Error deleting order:", error);
+                alert("An unexpected error occurred while deleting the order.");
+            }
+        },
+        startEditing(order) {
+            this.editingOrder = {...order};
+        },
+        isEditing(orderId) {
+            return this.editingOrder && this.editingOrder.id === orderId;
+        },
+        async saveEdit(orderId) {
             const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
-                method: "DELETE",
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify(this.editingOrder)
             });
             if (response.ok) {
+                this.editingOrder = null;
                 this.fetchOrders();
             }
         },

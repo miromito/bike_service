@@ -32,6 +32,11 @@ def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
     return crud.create_client(db, client)
 
 
+@app.put("/clients/{client_id}")
+def update_client(client_id: int, client: schemas.ClientCreate, db: Session = Depends(get_db)):
+    return crud.update_client(db, client_id, client)
+
+
 @app.delete("/clients/{client_id}")
 def delete_client(client_id: int, db: Session = Depends(get_db)):
     try:
@@ -42,6 +47,7 @@ def delete_client(client_id: int, db: Session = Depends(get_db)):
             status_code=400,
             detail="Cannot delete client because it is referenced in existing orders."
         )
+
 
 # Сотрудники
 @app.get("/employees/", response_model=list[schemas.Employee])
@@ -65,10 +71,17 @@ def delete_employee(employee_id: int, db: Session = Depends(get_db)):
             detail="Cannot delete employee because they are referenced in existing orders."
         )
 
+
+@app.put("/employees/{employee_id}")
+def update_employee(employee_id: int, employee: schemas.EmployeeCreate, db: Session = Depends(get_db)):
+    return crud.update_employee(db, employee_id, employee)
+
+
 # Услуги
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):
     return crud.get_services(db)
+
 
 @app.post("/services/", response_model=schemas.Service)
 def create_service(service: schemas.ServiceCreate, db: Session = Depends(get_db)):
@@ -86,6 +99,12 @@ def delete_service(service_id: int, db: Session = Depends(get_db)):
             detail="Cannot delete service because it is referenced in existing orders."
         )
 
+
+@app.put("/services/{service_id}")
+def update_service(service_id: int, service: schemas.ServiceCreate, db: Session = Depends(get_db)):
+    return crud.update_service(db, service_id, service)
+
+
 # Заказы
 @app.get("/orders/", response_model=list[schemas.Order])
 def read_orders(db: Session = Depends(get_db)):
@@ -100,3 +119,11 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
 @app.delete("/orders/{order_id}")
 def delete_order(order_id: str, db: Session = Depends(get_db)):
     return crud.delete_order(db, order_id)
+
+
+@app.put("/orders/{order_id}")
+def update_order(order_id: str, order: schemas.OrderCreate, db: Session = Depends(get_db)):
+    try:
+        return crud.update_order(db, order_id, order)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Unable to update order: {str(e)}")
