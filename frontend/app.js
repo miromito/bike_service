@@ -2,6 +2,14 @@ const Clients = {
     template: `
         <div>
             <h2>Clients</h2>
+            <!-- Search Field -->
+            <input
+                v-model="searchQuery"
+                type="text"
+                class="form-control mb-3"
+                placeholder="Search by name"
+            />
+
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -12,7 +20,7 @@ const Clients = {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(client, index) in clients" :key="client.id">
+                    <tr v-for="(client, index) in filteredClients" :key="client.id">
                         <td>{{ index + 1 }}</td>
                         <td>
                             <span v-if="!isEditing(client.id)">{{ client.name }}</span>
@@ -30,6 +38,7 @@ const Clients = {
                     </tr>
                 </tbody>
             </table>
+            
             <div v-if="errorMessage" class="alert alert-danger">
                 {{ errorMessage }}
             </div>
@@ -50,28 +59,54 @@ const Clients = {
     `,
     data() {
         return {
-            clients: [],
-            newClient: {name: "", phone_number: ""},
-            errorMessage: "",
-            editingClient: null, // Stores the client being edited
+            clients: [], // List of all clients
+            newClient: {name: "", phone_number: ""}, // New client object for the form
+            editingClient: null, // Object being edited
+            errorMessage: "", // Error messages
+            searchQuery: "" // Search input value
         };
     },
+    computed: {
+        // Filter clients based on the search query
+        filteredClients() {
+            return this.clients.filter(client =>
+                client.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+            );
+        }
+    },
     methods: {
+        // Fetch clients from the backend
         async fetchClients() {
-            const response = await fetch("http://127.0.0.1:8000/clients/");
-            this.clients = await response.json();
-        },
-        async addClient() {
-            const response = await fetch("http://127.0.0.1:8000/clients/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.newClient)
-            });
-            if (response.ok) {
-                this.newClient = {name: "", phone_number: ""};
-                this.fetchClients();
+            try {
+                const response = await fetch("http://127.0.0.1:8000/clients/");
+                if (response.ok) {
+                    this.clients = await response.json();
+                } else {
+                    console.error("Error fetching clients:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error fetching clients:", error);
             }
         },
+        // Add a new client
+        async addClient() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/clients/", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.newClient)
+                });
+                if (response.ok) {
+                    this.newClient = {name: "", phone_number: ""}; // Clear the form
+                    this.fetchClients(); // Refresh the list
+                } else {
+                    console.error("Error adding client:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error adding client:", error);
+            }
+        },
+        // Delete a client
         async deleteClient(clientId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/clients/${clientId}`, {
@@ -89,21 +124,30 @@ const Clients = {
                 this.errorMessage = "An unexpected error occurred while deleting the client.";
             }
         },
+        // Start editing a client
         startEditing(client) {
-            this.editingClient = {...client}; // Clone the client object for editing
+            this.editingClient = {...client}; // Clone the client object
         },
+        // Check if a specific client is being edited
         isEditing(clientId) {
             return this.editingClient && this.editingClient.id === clientId;
         },
+        // Save edits to the backend
         async saveEdit(clientId) {
-            const response = await fetch(`http://127.0.0.1:8000/clients/${clientId}`, {
-                method: "PUT",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.editingClient),
-            });
-            if (response.ok) {
-                this.editingClient = null; // Clear the editing client
-                this.fetchClients();
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/clients/${clientId}`, {
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.editingClient),
+                });
+                if (response.ok) {
+                    this.editingClient = null; // Clear the editing client
+                    this.fetchClients();
+                } else {
+                    console.error("Error saving edits:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error saving edits:", error);
             }
         },
     },
@@ -116,6 +160,14 @@ const Employees = {
     template: `
         <div>
             <h2>Employees</h2>
+            <!-- Search Field -->
+            <input
+                v-model="searchQuery"
+                type="text"
+                class="form-control mb-3"
+                placeholder="Search by name"
+            />
+
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -126,7 +178,7 @@ const Employees = {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(employee, index) in employees" :key="employee.id">
+                    <tr v-for="(employee, index) in filteredEmployees" :key="employee.id">
                         <td>{{ index + 1 }}</td>
                         <td>
                             <span v-if="!isEditing(employee.id)">{{ employee.name }}</span>
@@ -144,7 +196,7 @@ const Employees = {
                     </tr>
                 </tbody>
             </table>
-           
+
             <div v-if="errorMessage" class="alert alert-danger">
                 {{ errorMessage }}
             </div>
@@ -165,28 +217,54 @@ const Employees = {
     `,
     data() {
         return {
-            employees: [],
-            newEmployee: {name: "", position: ""},
-            editingEmployee: null, // Track the employee being edited
-            errorMessage: ""
+            employees: [], // List of all employees
+            newEmployee: {name: "", position: ""}, // New employee object for the form
+            editingEmployee: null, // Object being edited
+            errorMessage: "", // Error messages
+            searchQuery: "" // Search input value
         };
     },
+    computed: {
+        // Filter employees based on the search query
+        filteredEmployees() {
+            return this.employees.filter(employee =>
+                employee.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+            );
+        }
+    },
     methods: {
+        // Fetch employees from the backend
         async fetchEmployees() {
-            const response = await fetch("http://127.0.0.1:8000/employees/");
-            this.employees = await response.json();
-        },
-        async addEmployee() {
-            const response = await fetch("http://127.0.0.1:8000/employees/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.newEmployee)
-            });
-            if (response.ok) {
-                this.newEmployee = {name: "", position: ""};
-                this.fetchEmployees();
+            try {
+                const response = await fetch("http://127.0.0.1:8000/employees/");
+                if (response.ok) {
+                    this.employees = await response.json();
+                } else {
+                    console.error("Error fetching employees:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error fetching employees:", error);
             }
         },
+        // Add a new employee
+        async addEmployee() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/employees/", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.newEmployee)
+                });
+                if (response.ok) {
+                    this.newEmployee = {name: "", position: ""}; // Clear the form
+                    this.fetchEmployees(); // Refresh the list
+                } else {
+                    console.error("Error adding employee:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error adding employee:", error);
+            }
+        },
+        // Delete an employee
         async deleteEmployee(employeeId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/employees/${employeeId}`, {
@@ -194,32 +272,42 @@ const Employees = {
                 });
                 if (!response.ok) {
                     const error = await response.json();
-                    this.errorMessage = error.detail;
+                    this.errorMessage = error.detail; // Set the error message
                 } else {
+                    this.errorMessage = ""; // Clear the error message on success
                     this.fetchEmployees();
                 }
             } catch (error) {
                 console.error("Error deleting employee:", error);
-                alert("An unexpected error occurred while deleting the employee.");
+                this.errorMessage = "An unexpected error occurred while deleting the employee.";
             }
         },
+        // Start editing an employee
         startEditing(employee) {
-            this.editingEmployee = {...employee};
+            this.editingEmployee = {...employee}; // Clone the employee object
         },
+        // Check if a specific employee is being edited
         isEditing(employeeId) {
             return this.editingEmployee && this.editingEmployee.id === employeeId;
         },
+        // Save edits to the backend
         async saveEdit(employeeId) {
-            const response = await fetch(`http://127.0.0.1:8000/employees/${employeeId}`, {
-                method: "PUT",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.editingEmployee)
-            });
-            if (response.ok) {
-                this.editingEmployee = null;
-                this.fetchEmployees();
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/employees/${employeeId}`, {
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.editingEmployee),
+                });
+                if (response.ok) {
+                    this.editingEmployee = null; // Clear the editing employee
+                    this.fetchEmployees();
+                } else {
+                    console.error("Error saving edits:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error saving edits:", error);
             }
-        }
+        },
     },
     mounted() {
         this.fetchEmployees();
@@ -230,6 +318,14 @@ const Services = {
     template: `
         <div>
             <h2>Services</h2>
+            <!-- Search Field -->
+            <input
+                v-model="searchQuery"
+                type="text"
+                class="form-control mb-3"
+                placeholder="Search by name"
+            />
+
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -239,7 +335,7 @@ const Services = {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(service, index) in services" :key="service.id">
+                    <tr v-for="(service, index) in filteredServices" :key="service.id">
                         <td>{{ index + 1 }}</td>
                         <td>
                             <span v-if="!isEditing(service.id)">{{ service.name }}</span>
@@ -253,7 +349,7 @@ const Services = {
                     </tr>
                 </tbody>
             </table>
-            
+
             <div v-if="errorMessage" class="alert alert-danger">
                 {{ errorMessage }}
             </div>
@@ -270,28 +366,54 @@ const Services = {
     `,
     data() {
         return {
-            services: [],
-            newService: {name: ""},
-            editingService: null, // Track the service being edited
-            errorMessage: ""
+            services: [], // List of all services
+            newService: {name: ""}, // New service object for the form
+            editingService: null, // Object being edited
+            errorMessage: "", // Error messages
+            searchQuery: "" // Search input value
         };
     },
+    computed: {
+        // Filter services based on the search query
+        filteredServices() {
+            return this.services.filter(service =>
+                service.name.toLowerCase().includes(this.searchQuery.toLowerCase())
+            );
+        }
+    },
     methods: {
+        // Fetch services from the backend
         async fetchServices() {
-            const response = await fetch("http://127.0.0.1:8000/services/");
-            this.services = await response.json();
-        },
-        async addService() {
-            const response = await fetch("http://127.0.0.1:8000/services/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.newService)
-            });
-            if (response.ok) {
-                this.newService = {name: ""};
-                this.fetchServices();
+            try {
+                const response = await fetch("http://127.0.0.1:8000/services/");
+                if (response.ok) {
+                    this.services = await response.json();
+                } else {
+                    console.error("Error fetching services:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error fetching services:", error);
             }
         },
+        // Add a new service
+        async addService() {
+            try {
+                const response = await fetch("http://127.0.0.1:8000/services/", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.newService)
+                });
+                if (response.ok) {
+                    this.newService = {name: ""}; // Clear the form
+                    this.fetchServices(); // Refresh the list
+                } else {
+                    console.error("Error adding service:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error adding service:", error);
+            }
+        },
+        // Delete a service
         async deleteService(serviceId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/services/${serviceId}`, {
@@ -299,32 +421,42 @@ const Services = {
                 });
                 if (!response.ok) {
                     const error = await response.json();
-                    this.errorMessage = error.detail;
+                    this.errorMessage = error.detail; // Set the error message
                 } else {
+                    this.errorMessage = ""; // Clear the error message on success
                     this.fetchServices();
                 }
             } catch (error) {
                 console.error("Error deleting service:", error);
-                alert("An unexpected error occurred while deleting the service.");
+                this.errorMessage = "An unexpected error occurred while deleting the service.";
             }
         },
+        // Start editing a service
         startEditing(service) {
-            this.editingService = {...service};
+            this.editingService = {...service}; // Clone the service object
         },
+        // Check if a specific service is being edited
         isEditing(serviceId) {
             return this.editingService && this.editingService.id === serviceId;
         },
+        // Save edits to the backend
         async saveEdit(serviceId) {
-            const response = await fetch(`http://127.0.0.1:8000/services/${serviceId}`, {
-                method: "PUT",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.editingService)
-            });
-            if (response.ok) {
-                this.editingService = null;
-                this.fetchServices();
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/services/${serviceId}`, {
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.editingService),
+                });
+                if (response.ok) {
+                    this.editingService = null; // Clear the editing service
+                    this.fetchServices();
+                } else {
+                    console.error("Error saving edits:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error saving edits:", error);
             }
-        }
+        },
     },
     mounted() {
         this.fetchServices();
@@ -335,6 +467,14 @@ const Orders = {
     template: `
         <div>
             <h2>Orders</h2>
+            <!-- Search Field -->
+            <input
+                v-model="searchQuery"
+                type="text"
+                class="form-control mb-3"
+                placeholder="Search by Order ID"
+            />
+
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -347,7 +487,7 @@ const Orders = {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="order in orders" :key="order.id">
+                    <tr v-for="order in filteredOrders" :key="order.id">
                         <td>{{ order.id }}</td>
                         <td>
                             <span v-if="!isEditing(order.id)">{{ getClientName(order.client_id) }}</span>
@@ -379,7 +519,7 @@ const Orders = {
                     </tr>
                 </tbody>
             </table>
-            
+
             <div v-if="errorMessage" class="alert alert-danger">
                 {{ errorMessage }}
             </div>
@@ -414,20 +554,39 @@ const Orders = {
     `,
     data() {
         return {
-            orders: [],
-            clients: [],
-            services: [],
-            employees: [],
-            newOrder: {client_id: "", service_id: "", employee_id: "", date: ""},
-            editingOrder: null, // Track the order being edited
-            errorMessage: ""
+            orders: [], // List of all orders
+            clients: [], // List of all clients
+            services: [], // List of all services
+            employees: [], // List of all employees
+            newOrder: {client_id: "", service_id: "", employee_id: "", date: ""}, // New order form object
+            editingOrder: null, // Object being edited
+            errorMessage: "", // Error messages
+            searchQuery: "" // Search input value
         };
     },
+    computed: {
+        // Filter orders based on the search query (Order ID)
+        filteredOrders() {
+            return this.orders.filter(order =>
+                order.id.toLowerCase().includes(this.searchQuery.toLowerCase())
+            );
+        }
+    },
     methods: {
+        // Fetch orders from the backend
         async fetchOrders() {
-            const response = await fetch("http://127.0.0.1:8000/orders/");
-            this.orders = await response.json();
+            try {
+                const response = await fetch("http://127.0.0.1:8000/orders/");
+                if (response.ok) {
+                    this.orders = await response.json();
+                } else {
+                    console.error("Error fetching orders:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error fetching orders:", error);
+            }
         },
+        // Fetch related data (clients, services, employees)
         async fetchClients() {
             const response = await fetch("http://127.0.0.1:8000/clients/");
             this.clients = await response.json();
@@ -440,17 +599,25 @@ const Orders = {
             const response = await fetch("http://127.0.0.1:8000/employees/");
             this.employees = await response.json();
         },
+        // Add a new order
         async addOrder() {
-            const response = await fetch("http://127.0.0.1:8000/orders/", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.newOrder)
-            });
-            if (response.ok) {
-                this.newOrder = {client_id: "", service_id: "", employee_id: "", date: ""};
-                this.fetchOrders();
+            try {
+                const response = await fetch("http://127.0.0.1:8000/orders/", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.newOrder)
+                });
+                if (response.ok) {
+                    this.newOrder = {client_id: "", service_id: "", employee_id: "", date: ""}; // Clear the form
+                    this.fetchOrders(); // Refresh the list
+                } else {
+                    console.error("Error adding order:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error adding order:", error);
             }
         },
+        // Delete an order
         async deleteOrder(orderId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
@@ -458,32 +625,43 @@ const Orders = {
                 });
                 if (!response.ok) {
                     const error = await response.json();
-                    this.errorMessage = error.detail;
+                    this.errorMessage = error.detail; // Set the error message
                 } else {
+                    this.errorMessage = ""; // Clear the error message on success
                     this.fetchOrders();
                 }
             } catch (error) {
                 console.error("Error deleting order:", error);
-                alert("An unexpected error occurred while deleting the order.");
+                this.errorMessage = "An unexpected error occurred while deleting the order.";
             }
         },
+        // Start editing an order
         startEditing(order) {
-            this.editingOrder = {...order};
+            this.editingOrder = {...order}; // Clone the order object
         },
+        // Check if a specific order is being edited
         isEditing(orderId) {
             return this.editingOrder && this.editingOrder.id === orderId;
         },
+        // Save edits to the backend
         async saveEdit(orderId) {
-            const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
-                method: "PUT",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify(this.editingOrder)
-            });
-            if (response.ok) {
-                this.editingOrder = null;
-                this.fetchOrders();
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
+                    method: "PUT",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(this.editingOrder),
+                });
+                if (response.ok) {
+                    this.editingOrder = null; // Clear the editing order
+                    this.fetchOrders();
+                } else {
+                    console.error("Error saving edits:", response.statusText);
+                }
+            } catch (error) {
+                console.error("Error saving edits:", error);
             }
         },
+        // Utility functions to get names for client, service, and employee
         getClientName(clientId) {
             const client = this.clients.find(c => c.id === clientId);
             return client ? client.name : "Unknown";
@@ -504,6 +682,7 @@ const Orders = {
         this.fetchEmployees();
     }
 };
+
 
 const app = Vue.createApp({
     data() {
