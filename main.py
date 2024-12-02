@@ -31,6 +31,17 @@ def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
     return crud.create_client(db, client)
 
 
+# Сотрудники
+@app.get("/employees/", response_model=list[schemas.Employee])
+def read_clients(db: Session = Depends(get_db)):
+    return crud.get_employees(db)
+
+
+@app.post("/employees/", response_model=schemas.Employee)
+def create_client(employee: schemas.EmployeeCreate, db: Session = Depends(get_db)):
+    return crud.create_employee(db, employee)
+
+
 # Услуги
 @app.get("/services/", response_model=list[schemas.Service])
 def read_services(db: Session = Depends(get_db)):

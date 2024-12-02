@@ -1,4 +1,3 @@
-// Clients Component
 const Clients = {
     template: `
         <div>
@@ -12,7 +11,7 @@ const Clients = {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr :key="client.id" v-for="(client, index) in clients">
+                    <tr v-for="(client, index) in clients" :key="client.id">
                         <td>{{ index + 1 }}</td>
                         <td>{{ client.name }}</td>
                         <td>{{ client.phone_number }}</td>
@@ -28,7 +27,7 @@ const Clients = {
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Phone Number</label>
-                    <input v-model="newClient.phone_number" type="text" class="form-control" required>
+                    <input v-model="newClient.phone_number" type="number" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Client</button>
             </form>
@@ -62,7 +61,6 @@ const Clients = {
     }
 };
 
-// Employees Component
 const Employees = {
     template: `
         <div>
@@ -76,7 +74,7 @@ const Employees = {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr :key="employee.id" v-for="(employee, index) in employees">
+                    <tr v-for="(employee, index) in employees" :key="employee.id">
                         <td>{{ index + 1 }}</td>
                         <td>{{ employee.name }}</td>
                         <td>{{ employee.position }}</td>
@@ -126,7 +124,6 @@ const Employees = {
     }
 };
 
-// Services Component
 const Services = {
     template: `
         <div>
@@ -136,16 +133,12 @@ const Services = {
                     <tr>
                         <th>#</th>
                         <th>Name</th>
-                        <th>Description</th>
-                        <th>Price</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr :key="service.id" v-for="(service, index) in services">
+                    <tr v-for="(service, index) in services" :key="service.id">
                         <td>{{ index + 1 }}</td>
                         <td>{{ service.name }}</td>
-                        <td>{{ service.description }}</td>
-                        <td>{{ service.price }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -156,14 +149,6 @@ const Services = {
                     <label class="form-label">Name</label>
                     <input v-model="newService.name" type="text" class="form-control" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Description</label>
-                    <input v-model="newService.description" type="text" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Price</label>
-                    <input v-model="newService.price" type="number" class="form-control" required>
-                </div>
                 <button type="submit" class="btn btn-primary">Add Service</button>
             </form>
         </div>
@@ -171,7 +156,7 @@ const Services = {
     data() {
         return {
             services: [],
-            newService: {name: "", description: "", price: 0}
+            newService: {name: ""}
         };
     },
     methods: {
@@ -186,7 +171,7 @@ const Services = {
                 body: JSON.stringify(this.newService)
             });
             if (response.ok) {
-                this.newService = {name: "", description: "", price: 0};
+                this.newService = {name: ""};
                 this.fetchServices();
             }
         }
@@ -196,7 +181,6 @@ const Services = {
     }
 };
 
-// Orders Component
 const Orders = {
     template: `
         <div>
@@ -204,20 +188,20 @@ const Orders = {
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>#</th>
+                        <th>Order ID</th>
                         <th>Client</th>
                         <th>Service</th>
+                        <th>Employee</th>
                         <th>Date</th>
-                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr :key="order.id" v-for="(order, index) in orders">
-                        <td>{{ index + 1 }}</td>
+                    <tr v-for="order in orders" :key="order.id">
+                        <td>{{ order.id }}</td>
                         <td>{{ getClientName(order.client_id) }}</td>
                         <td>{{ getServiceName(order.service_id) }}</td>
+                        <td>{{ getEmployeeName(order.employee_id) }}</td>
                         <td>{{ order.date }}</td>
-                        <td>{{ order.status }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -227,26 +211,24 @@ const Orders = {
                 <div class="mb-3">
                     <label class="form-label">Client</label>
                     <select v-model="newOrder.client_id" class="form-select" required>
-                        <option v-for="client in clients" :value="client.id" :key="client.id">
-                            {{ client.name }}
-                        </option>
+                        <option v-for="client in clients" :value="client.id">{{ client.name }}</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Service</label>
                     <select v-model="newOrder.service_id" class="form-select" required>
-                        <option v-for="service in services" :value="service.id" :key="service.id">
-                            {{ service.name }}
-                        </option>
+                        <option v-for="service in services" :value="service.id">{{ service.name }}</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Employee</label>
+                    <select v-model="newOrder.employee_id" class="form-select" required>
+                        <option v-for="employee in employees" :value="employee.id">{{ employee.name }}</option>
                     </select>
                 </div>
                 <div class="mb-3">
                     <label class="form-label">Date</label>
-                    <input v-model="newOrder.date" type="datetime-local" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Status</label>
-                    <input v-model="newOrder.status" type="text" class="form-control" required>
+                    <input v-model="newOrder.date" type="date" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Order</button>
             </form>
@@ -257,7 +239,8 @@ const Orders = {
             orders: [],
             clients: [],
             services: [],
-            newOrder: {client_id: "", service_id: "", date: "", status: "Pending"}
+            employees: [],
+            newOrder: {client_id: "", service_id: "", employee_id: "", date: ""}
         };
     },
     methods: {
@@ -273,6 +256,10 @@ const Orders = {
             const response = await fetch("http://127.0.0.1:8000/services/");
             this.services = await response.json();
         },
+        async fetchEmployees() {
+            const response = await fetch("http://127.0.0.1:8000/employees/");
+            this.employees = await response.json();
+        },
         async addOrder() {
             const response = await fetch("http://127.0.0.1:8000/orders/", {
                 method: "POST",
@@ -280,7 +267,7 @@ const Orders = {
                 body: JSON.stringify(this.newOrder)
             });
             if (response.ok) {
-                this.newOrder = {client_id: "", service_id: "", date: "", status: "Pending"};
+                this.newOrder = {client_id: "", service_id: "", employee_id: "", date: ""};
                 this.fetchOrders();
             }
         },
@@ -291,21 +278,25 @@ const Orders = {
         getServiceName(serviceId) {
             const service = this.services.find(s => s.id === serviceId);
             return service ? service.name : "Unknown";
+        },
+        getEmployeeName(employeeId) {
+            const employee = this.employees.find(e => e.id === employeeId);
+            return employee ? employee.name : "Unknown";
         }
     },
     mounted() {
         this.fetchOrders();
         this.fetchClients();
         this.fetchServices();
+        this.fetchEmployees();
     }
 };
 
 
-// Vue App Initialization
 const app = Vue.createApp({
     data() {
         return {
-            currentView: Clients
+            currentView: "Clients"
         };
     },
     components: {Clients, Employees, Services, Orders}

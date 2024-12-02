@@ -21,13 +21,13 @@
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Bike Service</a>
             <button
-                    aria-controls="navbarNav"
-                    aria-expanded="false"
-                    aria-label="Toggle navigation"
                     class="navbar-toggler"
                     data-bs-target="#navbarNav"
                     data-bs-toggle="collapse"
                     type="button"
+                    aria-controls="navbarNav"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
             >
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -35,34 +35,34 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a
-                                :class="{ active: currentView === 'Clients' }"
-                                @click.prevent="currentView = 'Clients'"
                                 class="nav-link"
                                 href="#"
+                                :class="{ active: currentView === 'Clients' }"
+                                @click.prevent="currentView = 'Clients'"
                         >Clients</a>
                     </li>
                     <li class="nav-item">
                         <a
-                                :class="{ active: currentView === 'Employees' }"
-                                @click.prevent="currentView = 'Employees'"
                                 class="nav-link"
                                 href="#"
+                                :class="{ active: currentView === 'Employees' }"
+                                @click.prevent="currentView = 'Employees'"
                         >Employees</a>
                     </li>
                     <li class="nav-item">
                         <a
-                                :class="{ active: currentView === 'Services' }"
-                                @click.prevent="currentView = 'Services'"
                                 class="nav-link"
                                 href="#"
+                                :class="{ active: currentView === 'Services' }"
+                                @click.prevent="currentView = 'Services'"
                         >Services</a>
                     </li>
                     <li class="nav-item">
                         <a
-                                :class="{ active: currentView === 'Orders' }"
-                                @click.prevent="currentView = 'Orders'"
                                 class="nav-link"
                                 href="#"
+                                :class="{ active: currentView === 'Orders' }"
+                                @click.prevent="currentView = 'Orders'"
                         >Orders</a>
                     </li>
                 </ul>
@@ -71,7 +71,6 @@
     </nav>
 
     <div class="container mt-5">
-        <!-- Dynamic rendering of the current view -->
         <component :is="currentView"></component>
     </div>
 </div>
