@@ -5,8 +5,8 @@ import crud, models, schemas
 from fastapi.middleware.cors import CORSMiddleware
 
 # Вместо миграций, временно - для разработки
-Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
+# Base.metadata.drop_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 
 app = FastAPI()
@@ -30,6 +30,10 @@ def read_clients(db: Session = Depends(get_db)):
 def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
     return crud.create_client(db, client)
 
+
+@app.delete("/clients/{client_id}")
+def delete_client(client_id: int, db: Session = Depends(get_db)):
+    return crud.delete_client(db, client_id)
 
 # Сотрудники
 @app.get("/employees/", response_model=list[schemas.Employee])

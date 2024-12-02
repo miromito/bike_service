@@ -8,6 +8,7 @@ const Clients = {
                         <th>#</th>
                         <th>Name</th>
                         <th>Phone Number</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -15,6 +16,9 @@ const Clients = {
                         <td>{{ index + 1 }}</td>
                         <td>{{ client.name }}</td>
                         <td>{{ client.phone_number }}</td>
+                        <td>
+                            <button @click="deleteClient(client.id)" class="btn btn-danger btn-sm">Delete</button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -54,12 +58,21 @@ const Clients = {
                 this.newClient = {name: "", phone_number: ""};
                 this.fetchClients();
             }
+        },
+        async deleteClient(clientId) {
+            const response = await fetch(`http://127.0.0.1:8000/clients/${clientId}`, {
+                method: "DELETE",
+            });
+            if (response.ok) {
+                this.fetchClients(); // Refresh the list
+            }
         }
     },
     mounted() {
         this.fetchClients();
     }
 };
+
 
 const Employees = {
     template: `

@@ -20,6 +20,13 @@ def create_client(db: Session, client: schemas.ClientCreate):
     return result.mappings().first()
 
 
+def delete_client(db: Session, client_id: int):
+    query = text("DELETE FROM clients WHERE id = :id RETURNING *")
+    result = db.execute(query, {"id": client_id})
+    db.commit()
+    return result.mappings().first()
+
+
 # Сотрудники
 def get_employees(db: Session):
     query = text("SELECT * FROM employees")
