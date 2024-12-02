@@ -22,6 +22,9 @@ const Clients = {
                     </tr>
                 </tbody>
             </table>
+            <div v-if="errorMessage" class="alert alert-danger">
+                {{ errorMessage }}
+            </div>
 
             <h3>Add Client</h3>
             <form @submit.prevent="addClient">
@@ -40,7 +43,8 @@ const Clients = {
     data() {
         return {
             clients: [],
-            newClient: {name: "", phone_number: ""}
+            newClient: {name: "", phone_number: ""},
+            errorMessage: ""
         };
     },
     methods: {
@@ -60,19 +64,29 @@ const Clients = {
             }
         },
         async deleteClient(clientId) {
-            const response = await fetch(`http://127.0.0.1:8000/clients/${clientId}`, {
-                method: "DELETE",
-            });
-            if (response.ok) {
-                this.fetchClients(); // Refresh the list
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/clients/${clientId}`, {
+                    method: "DELETE",
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    this.errorMessage = error.detail; // Set the error message
+                } else {
+                    this.errorMessage = ""; // Clear the error message on success
+                    this.fetchClients();
+                }
+            } catch (error) {
+                console.error("Error deleting client:", error);
+                this.errorMessage = "An unexpected error occurred while deleting the client.";
             }
         }
+
+
     },
     mounted() {
         this.fetchClients();
     }
 };
-
 
 const Employees = {
     template: `
@@ -84,6 +98,7 @@ const Employees = {
                         <th>#</th>
                         <th>Name</th>
                         <th>Position</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -91,9 +106,16 @@ const Employees = {
                         <td>{{ index + 1 }}</td>
                         <td>{{ employee.name }}</td>
                         <td>{{ employee.position }}</td>
+                        <td>
+                            <button @click="deleteEmployee(employee.id)" class="btn btn-danger btn-sm">Delete</button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+           
+            <div v-if="errorMessage" class="alert alert-danger">
+                {{ errorMessage }}
+            </div>
 
             <h3>Add Employee</h3>
             <form @submit.prevent="addEmployee">
@@ -112,7 +134,8 @@ const Employees = {
     data() {
         return {
             employees: [],
-            newEmployee: {name: "", position: ""}
+            newEmployee: {name: "", position: ""},
+            errorMessage: ""
         };
     },
     methods: {
@@ -130,6 +153,22 @@ const Employees = {
                 this.newEmployee = {name: "", position: ""};
                 this.fetchEmployees();
             }
+        },
+        async deleteEmployee(employeeId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/employees/${employeeId}`, {
+                    method: "DELETE",
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    this.errorMessage = error.detail; // Set the error message
+                } else {
+                    this.fetchEmployees();
+                }
+            } catch (error) {
+                console.error("Error deleting employee:", error);
+                alert("An unexpected error occurred while deleting the employee.");
+            }
         }
     },
     mounted() {
@@ -146,15 +185,23 @@ const Services = {
                     <tr>
                         <th>#</th>
                         <th>Name</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="(service, index) in services" :key="service.id">
                         <td>{{ index + 1 }}</td>
                         <td>{{ service.name }}</td>
+                        <td>
+                            <button @click="deleteService(service.id)" class="btn btn-danger btn-sm">Delete</button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+            
+            <div v-if="errorMessage" class="alert alert-danger">
+                {{ errorMessage }}
+            </div>
 
             <h3>Add Service</h3>
             <form @submit.prevent="addService">
@@ -169,7 +216,8 @@ const Services = {
     data() {
         return {
             services: [],
-            newService: {name: ""}
+            newService: {name: ""},
+            errorMessage: ""
         };
     },
     methods: {
@@ -186,6 +234,22 @@ const Services = {
             if (response.ok) {
                 this.newService = {name: ""};
                 this.fetchServices();
+            }
+        },
+        async deleteService(serviceId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/services/${serviceId}`, {
+                    method: "DELETE",
+                });
+                if (!response.ok) {
+                    const error = await response.json();
+                    this.errorMessage = error.detail; // Set the error message
+                } else {
+                    this.fetchServices();
+                }
+            } catch (error) {
+                console.error("Error deleting service:", error);
+                alert("An unexpected error occurred while deleting the service.");
             }
         }
     },
@@ -206,6 +270,7 @@ const Orders = {
                         <th>Service</th>
                         <th>Employee</th>
                         <th>Date</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -215,6 +280,9 @@ const Orders = {
                         <td>{{ getServiceName(order.service_id) }}</td>
                         <td>{{ getEmployeeName(order.employee_id) }}</td>
                         <td>{{ order.date }}</td>
+                        <td>
+                            <button @click="deleteOrder(order.id)" class="btn btn-danger btn-sm">Delete</button>
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -284,6 +352,14 @@ const Orders = {
                 this.fetchOrders();
             }
         },
+        async deleteOrder(orderId) {
+            const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
+                method: "DELETE",
+            });
+            if (response.ok) {
+                this.fetchOrders();
+            }
+        },
         getClientName(clientId) {
             const client = this.clients.find(c => c.id === clientId);
             return client ? client.name : "Unknown";
@@ -304,7 +380,6 @@ const Orders = {
         this.fetchEmployees();
     }
 };
-
 
 const app = Vue.createApp({
     data() {

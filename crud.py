@@ -43,6 +43,13 @@ def create_employee(db: Session, employee: schemas.EmployeeCreate):
     return result.mappings().first()
 
 
+def delete_employee(db: Session, employee_id: int):
+    query = text("DELETE FROM employees WHERE id = :id RETURNING *")
+    result = db.execute(query, {"id": employee_id})
+    db.commit()
+    return result.mappings().first()
+
+
 # Услуги
 def get_services(db: Session):
     query = text("SELECT * FROM services")
@@ -55,6 +62,13 @@ def create_service(db: Session, service: schemas.ServiceCreate):
         "INSERT INTO services (name) VALUES (:name) RETURNING *"
     )
     result = db.execute(query, {"name": service.name})
+    db.commit()
+    return result.mappings().first()
+
+
+def delete_service(db: Session, service_id: int):
+    query = text("DELETE FROM services WHERE id = :id RETURNING *")
+    result = db.execute(query, {"id": service_id})
     db.commit()
     return result.mappings().first()
 
@@ -87,5 +101,12 @@ def create_order(db: Session, order: schemas.OrderCreate):
             "date": order.date,
         },
     )
+    db.commit()
+    return result.mappings().first()
+
+
+def delete_order(db: Session, order_id: str):
+    query = text("DELETE FROM orders WHERE id = :id RETURNING *")
+    result = db.execute(query, {"id": order_id})
     db.commit()
     return result.mappings().first()
