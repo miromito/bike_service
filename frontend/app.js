@@ -1,3 +1,19 @@
+const Home = {
+    template: `
+        <div class="text-center mt-5">
+            <h1>Welcome to Bike Service</h1>
+            <p class="lead">
+                Your trusted partner for bike repairs and maintenance. We provide high-quality services to keep your bike running smoothly.
+            </p>
+            <p>
+                Use the navigation menu above to manage clients, employees, services, and orders.
+            </p>
+            <img src="logo.webp" alt="Bike Service" class="img-fluid logo-small mt-4">
+        </div>
+    `
+};
+
+
 const Clients = {
     template: `
         <div>
@@ -687,10 +703,10 @@ const Orders = {
 const app = Vue.createApp({
     data() {
         return {
-            currentView: "Clients"
+            currentView: "Home"
         };
     },
-    components: {Clients, Employees, Services, Orders}
+    components: {Home, Clients, Employees, Services, Orders}
 });
 
 app.mount("#app");

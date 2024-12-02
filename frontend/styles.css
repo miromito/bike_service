@@ -18,3 +18,9 @@ h2 {
 form {
     margin-top: 2rem;
 }
+
+.logo-small {
+    max-width: 200px; /* Adjust width */
+    height: auto; /* Maintain aspect ratio */
+    margin: 0 auto; /* Center horizontally */
+}
