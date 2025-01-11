@@ -4,10 +4,34 @@ from sqlalchemy.exc import IntegrityError
 from database import Base, engine, get_db
 import crud, schemas
 from fastapi.middleware.cors import CORSMiddleware
+import models
 
 # Вместо миграций, временно - для разработки
-# Base.metadata.drop_all(bind=engine)
-# Base.metadata.create_all(bind=engine)
+import time
+from sqlalchemy.exc import OperationalError
+
+# Retry creating tables if the database is not ready
+MAX_RETRIES = 5
+WAIT_TIME = 5  # seconds
+
+def initialize_database():
+    retries = 0
+    while retries < MAX_RETRIES:
+        try:
+            print("Creating database tables...")
+            Base.metadata.create_all(bind=engine)
+            print("Database tables created successfully.")
+            break
+        except OperationalError as e:
+            print(f"Database not ready, retrying in {WAIT_TIME} seconds... ({retries + 1}/{MAX_RETRIES})")
+            retries += 1
+            time.sleep(WAIT_TIME)
+    if retries == MAX_RETRIES:
+        print("Failed to initialize database after retries.")
+        raise RuntimeError("Database initialization failed.")
+
+# Call the initialization function
+initialize_database()
 
 
 app = FastAPI()
