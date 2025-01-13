@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, Float
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -24,6 +24,7 @@ class Service(Base):
     __tablename__ = "services"
     id = Column(Integer, primary_key=True, index=True)  # КодУслуги
     name = Column(String(120), nullable=False)  # Название
+    price = Column(Float, nullable=False)
 
     orders = relationship("Order", back_populates="service")
 

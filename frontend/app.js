@@ -334,28 +334,23 @@ const Services = {
     template: `
         <div>
             <h2>Services</h2>
-            <!-- Search Field -->
-            <input
-                v-model="searchQuery"
-                type="text"
-                class="form-control mb-3"
-                placeholder="Search by name"
-            />
-
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th>#</th>
                         <th>Name</th>
+                        <th>Price</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(service, index) in filteredServices" :key="service.id">
-                        <td>{{ index + 1 }}</td>
+                    <tr v-for="service in services" :key="service.id">
                         <td>
                             <span v-if="!isEditing(service.id)">{{ service.name }}</span>
                             <input v-if="isEditing(service.id)" v-model="editingService.name" type="text" class="form-control">
+                        </td>
+                        <td>
+                            <span v-if="!isEditing(service.id)">{{ service.price }}</span>
+                            <input v-if="isEditing(service.id)" v-model="editingService.price" type="number" step="0.01" class="form-control">
                         </td>
                         <td>
                             <button v-if="!isEditing(service.id)" @click="startEditing(service)" class="btn btn-warning btn-sm">Edit</button>
@@ -366,15 +361,15 @@ const Services = {
                 </tbody>
             </table>
 
-            <div v-if="errorMessage" class="alert alert-danger">
-                {{ errorMessage }}
-            </div>
-
             <h3>Add Service</h3>
             <form @submit.prevent="addService">
                 <div class="mb-3">
                     <label class="form-label">Name</label>
                     <input v-model="newService.name" type="text" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Price</label>
+                    <input v-model="newService.price" type="number" step="0.01" class="form-control" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Add Service</button>
             </form>
@@ -383,7 +378,7 @@ const Services = {
     data() {
         return {
             services: [], // List of all services
-            newService: {name: ""}, // New service object for the form
+            newService: {name: "", price: 0}, // New service object for the form
             editingService: null, // Object being edited
             errorMessage: "", // Error messages
             searchQuery: "" // Search input value
@@ -398,79 +393,60 @@ const Services = {
         }
     },
     methods: {
-        // Fetch services from the backend
         async fetchServices() {
             try {
                 const response = await fetch("http://127.0.0.1:8000/services/");
-                if (response.ok) {
-                    this.services = await response.json();
-                } else {
-                    console.error("Error fetching services:", response.statusText);
-                }
+                this.services = await response.json();
             } catch (error) {
                 console.error("Error fetching services:", error);
             }
         },
-        // Add a new service
         async addService() {
             try {
                 const response = await fetch("http://127.0.0.1:8000/services/", {
                     method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify(this.newService)
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(this.newService),
                 });
                 if (response.ok) {
-                    this.newService = {name: ""}; // Clear the form
-                    this.fetchServices(); // Refresh the list
-                } else {
-                    console.error("Error adding service:", response.statusText);
+                    this.newService = { name: "", price: 0 }; // Clear form
+                    this.fetchServices();
                 }
             } catch (error) {
                 console.error("Error adding service:", error);
             }
         },
-        // Delete a service
         async deleteService(serviceId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/services/${serviceId}`, {
                     method: "DELETE",
                 });
-                if (!response.ok) {
-                    const error = await response.json();
-                    this.errorMessage = error.detail; // Set the error message
-                } else {
-                    this.errorMessage = ""; // Clear the error message on success
+                if (response.ok) {
                     this.fetchServices();
                 }
             } catch (error) {
                 console.error("Error deleting service:", error);
-                this.errorMessage = "An unexpected error occurred while deleting the service.";
             }
         },
-        // Start editing a service
         startEditing(service) {
-            this.editingService = {...service}; // Clone the service object
+            this.editingService = { ...service };
         },
-        // Check if a specific service is being edited
         isEditing(serviceId) {
             return this.editingService && this.editingService.id === serviceId;
         },
-        // Save edits to the backend
         async saveEdit(serviceId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/services/${serviceId}`, {
                     method: "PUT",
-                    headers: {"Content-Type": "application/json"},
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(this.editingService),
                 });
                 if (response.ok) {
-                    this.editingService = null; // Clear the editing service
+                    this.editingService = null; // Exit editing mode
                     this.fetchServices();
-                } else {
-                    console.error("Error saving edits:", response.statusText);
                 }
             } catch (error) {
-                console.error("Error saving edits:", error);
+                console.error("Error saving service:", error);
             }
         },
     },
@@ -497,6 +473,7 @@ const Orders = {
                         <th>Order ID</th>
                         <th>Client</th>
                         <th>Service</th>
+                        <th>Price</th>
                         <th>Employee</th>
                         <th>Date</th>
                         <th>Actions</th>
@@ -518,6 +495,9 @@ const Orders = {
                             </select>
                         </td>
                         <td>
+                            <span>{{ getServicePrice(order.service_id) }}</span>
+                        </td>
+                        <td>
                             <span v-if="!isEditing(order.id)">{{ getEmployeeName(order.employee_id) }}</span>
                             <select v-if="isEditing(order.id)" v-model="editingOrder.employee_id" class="form-select">
                                 <option v-for="employee in employees" :value="employee.id">{{ employee.name }}</option>
@@ -531,6 +511,7 @@ const Orders = {
                             <button v-if="!isEditing(order.id)" @click="startEditing(order)" class="btn btn-warning btn-sm">Edit</button>
                             <button v-if="isEditing(order.id)" @click="saveEdit(order.id)" class="btn btn-success btn-sm">Save</button>
                             <button @click="deleteOrder(order.id)" class="btn btn-danger btn-sm">Delete</button>
+                            <button @click="generateInvoice(order)" class="btn btn-primary btn-sm">Generate Invoice</button>
                         </td>
                     </tr>
                 </tbody>
@@ -566,43 +547,40 @@ const Orders = {
                 </div>
                 <button type="submit" class="btn btn-primary">Add Order</button>
             </form>
+
+            <button @click="generateTotalReport" class="btn btn-success mt-3">Generate Total Report</button>
         </div>
     `,
     data() {
         return {
-            orders: [], // List of all orders
-            clients: [], // List of all clients
-            services: [], // List of all services
-            employees: [], // List of all employees
-            newOrder: {client_id: "", service_id: "", employee_id: "", date: ""}, // New order form object
-            editingOrder: null, // Object being edited
-            errorMessage: "", // Error messages
-            searchQuery: "" // Search input value
+            orders: [],
+            clients: [],
+            services: [],
+            employees: [],
+            newOrder: {client_id: "", service_id: "", employee_id: "", date: ""},
+            editingOrder: null,
+            errorMessage: "",
+            searchQuery: ""
         };
     },
     computed: {
-        // Filter orders based on the search query (Order ID)
         filteredOrders() {
             return this.orders.filter(order =>
-                order.id.toLowerCase().includes(this.searchQuery.toLowerCase())
+                order.id.toString().includes(this.searchQuery)
             );
         }
     },
     methods: {
-        // Fetch orders from the backend
         async fetchOrders() {
             try {
                 const response = await fetch("http://127.0.0.1:8000/orders/");
                 if (response.ok) {
                     this.orders = await response.json();
-                } else {
-                    console.error("Error fetching orders:", response.statusText);
                 }
             } catch (error) {
                 console.error("Error fetching orders:", error);
             }
         },
-        // Fetch related data (clients, services, employees)
         async fetchClients() {
             const response = await fetch("http://127.0.0.1:8000/clients/");
             this.clients = await response.json();
@@ -615,7 +593,6 @@ const Orders = {
             const response = await fetch("http://127.0.0.1:8000/employees/");
             this.employees = await response.json();
         },
-        // Add a new order
         async addOrder() {
             try {
                 const response = await fetch("http://127.0.0.1:8000/orders/", {
@@ -624,60 +601,50 @@ const Orders = {
                     body: JSON.stringify(this.newOrder)
                 });
                 if (response.ok) {
-                    this.newOrder = {client_id: "", service_id: "", employee_id: "", date: ""}; // Clear the form
-                    this.fetchOrders(); // Refresh the list
-                } else {
-                    console.error("Error adding order:", response.statusText);
+                    this.newOrder = {client_id: "", service_id: "", employee_id: "", date: ""};
+                    this.fetchOrders();
                 }
             } catch (error) {
                 console.error("Error adding order:", error);
             }
         },
-        // Delete an order
         async deleteOrder(orderId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
-                    method: "DELETE",
+                    method: "DELETE"
                 });
                 if (!response.ok) {
                     const error = await response.json();
-                    this.errorMessage = error.detail; // Set the error message
+                    this.errorMessage = error.detail;
                 } else {
-                    this.errorMessage = ""; // Clear the error message on success
+                    this.errorMessage = "";
                     this.fetchOrders();
                 }
             } catch (error) {
                 console.error("Error deleting order:", error);
-                this.errorMessage = "An unexpected error occurred while deleting the order.";
             }
         },
-        // Start editing an order
         startEditing(order) {
-            this.editingOrder = {...order}; // Clone the order object
+            this.editingOrder = {...order};
         },
-        // Check if a specific order is being edited
         isEditing(orderId) {
             return this.editingOrder && this.editingOrder.id === orderId;
         },
-        // Save edits to the backend
         async saveEdit(orderId) {
             try {
                 const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}`, {
                     method: "PUT",
                     headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify(this.editingOrder),
+                    body: JSON.stringify(this.editingOrder)
                 });
                 if (response.ok) {
-                    this.editingOrder = null; // Clear the editing order
+                    this.editingOrder = null;
                     this.fetchOrders();
-                } else {
-                    console.error("Error saving edits:", response.statusText);
                 }
             } catch (error) {
                 console.error("Error saving edits:", error);
             }
         },
-        // Utility functions to get names for client, service, and employee
         getClientName(clientId) {
             const client = this.clients.find(c => c.id === clientId);
             return client ? client.name : "Unknown";
@@ -686,9 +653,59 @@ const Orders = {
             const service = this.services.find(s => s.id === serviceId);
             return service ? service.name : "Unknown";
         },
+        getServicePrice(serviceId) {
+            const service = this.services.find(s => s.id === serviceId);
+            return service ? service.price : "0.00";
+        },
         getEmployeeName(employeeId) {
             const employee = this.employees.find(e => e.id === employeeId);
             return employee ? employee.name : "Unknown";
+        },
+        async generateInvoice(orderId) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/orders/${orderId}/invoice`);
+                const orderDetails = await response.json();
+
+                const newWindow = window.open("", "_blank");
+                newWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Invoice</title>
+                    </head>
+                    <body>
+                        <h2>Invoice for Order ID: ${orderDetails["Order ID"]}</h2>
+                        <table border="1" cellpadding="5" cellspacing="0">
+                            <tr><th>Client</th><td>${orderDetails.Client}</td></tr>
+                            <tr><th>Service</th><td>${orderDetails.Service}</td></tr>
+                            <tr><th>Price</th><td>${orderDetails.Price}</td></tr>
+                            <tr><th>Employee</th><td>${orderDetails.Employee}</td></tr>
+                            <tr><th>Date</th><td>${orderDetails.Date}</td></tr>
+                        </table>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+            } catch (error) {
+                console.error("Error generating invoice:", error);
+            }
+        },
+        generateTotalReport() {
+            fetch("http://127.0.0.1:8000/orders/report", {
+                method: "GET"
+            })
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "total_report.csv";
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    console.error("Error generating report:", error);
+                });
         }
     },
     mounted() {

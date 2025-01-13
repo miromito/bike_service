@@ -6,6 +6,12 @@ import schemas
 
 
 # Клиенты
+def get_client(db: Session, client_id):
+    query = text("SELECT * FROM clients WHERE id = :id")
+    result = db.execute(query, {"id": client_id})
+    return result.mappings().first()
+
+
 def get_clients(db: Session):
     query = text("SELECT * FROM clients")
     result = db.execute(query)
@@ -38,6 +44,12 @@ def update_client(db: Session, client_id: int, client: schemas.ClientCreate):
 
 
 # Сотрудники
+def get_employee(db: Session, employee_id):
+    query = text("SELECT * FROM employees WHERE id = :id")
+    result = db.execute(query, {"id": employee_id})
+    return result.mappings().first()
+
+
 def get_employees(db: Session):
     query = text("SELECT * FROM employees")
     result = db.execute(query)
@@ -76,11 +88,25 @@ def get_services(db: Session):
     return [dict(row) for row in result.mappings()]
 
 
+def get_service(db: Session, service_id):
+    query = text("SELECT * FROM services WHERE id = :id")
+    result = db.execute(query, {"id": service_id})
+    return result.mappings().first()
+
+
 def create_service(db: Session, service: schemas.ServiceCreate):
     query = text(
-        "INSERT INTO services (name) VALUES (:name) RETURNING *"
+        "INSERT INTO services (name, price) VALUES (:name, :price) RETURNING *"
     )
-    result = db.execute(query, {"name": service.name})
+    result = db.execute(query, {"name": service.name, "price": service.price})
+    db.commit()
+    return result.mappings().first()
+
+def update_service(db: Session, service_id: int, service: schemas.ServiceCreate):
+    query = text(
+        "UPDATE services SET name = :name, price = :price WHERE id = :id RETURNING *"
+    )
+    result = db.execute(query, {"id": service_id, "name": service.name, "price": service.price})
     db.commit()
     return result.mappings().first()
 
@@ -92,20 +118,17 @@ def delete_service(db: Session, service_id: int):
     return result.mappings().first()
 
 
-def update_service(db: Session, service_id: int, service: schemas.ServiceCreate):
-    query = text(
-        "UPDATE services SET name = :name WHERE id = :id RETURNING *"
-    )
-    result = db.execute(query, {"id": service_id, "name": service.name})
-    db.commit()
-    return result.mappings().first()
-
-
 # Заказы
 def get_orders(db: Session):
     query = text("SELECT * FROM orders")
     result = db.execute(query)
     return [dict(row) for row in result.mappings()]
+
+
+def get_order(db: Session, order_id: str):
+    query = text("SELECT * FROM orders WHERE id = id")
+    result = db.execute(query, {"id": order_id})
+    return result.mappings().first()
 
 
 def create_order(db: Session, order: schemas.OrderCreate):

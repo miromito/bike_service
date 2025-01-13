@@ -5,6 +5,9 @@ from database import Base, engine, get_db
 import crud, schemas
 from fastapi.middleware.cors import CORSMiddleware
 import models
+import csv
+from io import StringIO
+from fastapi.responses import StreamingResponse
 
 # Вместо миграций, временно - для разработки
 import time
@@ -13,6 +16,7 @@ from sqlalchemy.exc import OperationalError
 # Retry creating tables if the database is not ready
 MAX_RETRIES = 5
 WAIT_TIME = 5  # seconds
+
 
 def initialize_database():
     retries = 0
@@ -30,9 +34,9 @@ def initialize_database():
         print("Failed to initialize database after retries.")
         raise RuntimeError("Database initialization failed.")
 
+
 # Call the initialization function
 initialize_database()
-
 
 app = FastAPI()
 
@@ -50,6 +54,7 @@ app.add_middleware(
 @app.get("/clients/", response_model=list[schemas.Client])
 def read_clients(db: Session = Depends(get_db)):
     return crud.get_clients(db)
+
 
 @app.post("/clients/", response_model=schemas.Client)
 def create_client(client: schemas.ClientCreate, db: Session = Depends(get_db)):
@@ -151,3 +156,65 @@ def update_order(order_id: str, order: schemas.OrderCreate, db: Session = Depend
         return crud.update_order(db, order_id, order)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Unable to update order: {str(e)}")
+
+
+@app.get("/orders/{order_id}/invoice")
+def generate_invoice(order_id: str, db: Session = Depends(get_db)):
+    order = crud.get_order(db, order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    client = crud.get_client(db, order["client_id"])
+    service = crud.get_service(db, order["service_id"])
+    employee = crud.get_employee(db, order["employee_id"])
+
+    return {
+        "Order ID": order["id"],
+        "Client": client["name"],
+        "Service": service["name"],
+        "Price": service["price"],
+        "Employee": employee["name"],
+        "Date": order["date"]
+    }
+
+
+@app.get("/orders/report")
+def generate_total_report(db: Session = Depends(get_db)):
+    orders = crud.get_orders(db)
+    clients = crud.get_clients(db)
+    services = crud.get_services(db)
+
+    # Prepare CSV content
+    csv_data = StringIO()
+    writer = csv.writer(csv_data)
+    writer.writerow(["Client Name", "Order ID", "Service Name", "Price", "Employee Name", "Date", "Total Amount"])
+
+    # Map to store total amounts per client
+    client_totals = {}
+
+    for order in orders:
+        client = next(c for c in clients if c["id"] == order["client_id"])
+        service = next(s for s in services if s["id"] == order["service_id"])
+        employee = next(e for e in crud.get_employees(db) if e["id"] == order["employee_id"])
+
+        # Update total amount per client
+        client_totals[client["id"]] = client_totals.get(client["id"], 0) + service["price"]
+
+        writer.writerow([
+            client["name"], order["id"], service["name"], service["price"],
+            employee["name"], order["date"], client_totals[client["id"]]
+        ])
+
+    # Write total amounts per client at the end
+    writer.writerow([])
+    writer.writerow(["Client Totals"])
+    for client_id, total in client_totals.items():
+        client_name = next(c["name"] for c in clients if c["id"] == client_id)
+        writer.writerow([client_name, "", "", "", "", "", total])
+
+    csv_data.seek(0)
+    return StreamingResponse(
+        iter([csv_data.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=total_report.csv"}
+    )

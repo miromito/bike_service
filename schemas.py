@@ -38,6 +38,7 @@ class Employee(EmployeeBase):
 # Услуги
 class ServiceBase(BaseModel):
     name: str
+    price: float
 
 class ServiceCreate(ServiceBase):
     pass
